@@ -8,7 +8,8 @@ TextureEntry::TextureEntry(std::ifstream &stream)
 
 TextureEntry::TextureEntry(uint8_t bpp, const Format &format, uint16_t paletteSize, uint16_t width, uint16_t height, uint32_t imageSize, uint32_t paletteOffset, uint32_t imageOffset)
     : _bpp(bpp), _format(format), _paletteSize(paletteSize), _width(width), _height(height), _imageSize(imageSize), _paletteOffset(paletteOffset), _imageOffset(imageOffset)
-{}
+{
+}
 
 void TextureEntry::serialize(std::ofstream &stream) const
 {
@@ -20,6 +21,14 @@ void TextureEntry::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _imageSize);
     StreamHelper::write(stream, _paletteOffset);
     StreamHelper::write(stream, _imageOffset);
+    std::streampos lastPos = stream.tellp();
+    stream.seekp(_imageOffset, std::ios::beg);
+    StreamHelper::write(stream, _imageData.data(), _imageSize);
+    if (_format.getValue() == Format::Value::C4 || _format.getValue() == Format::Value::C8) {
+        stream.seekp(_paletteOffset, std::ios::beg);
+        StreamHelper::write(stream, _paletteData.data(), _paletteSize);
+    }
+    stream.seekp(lastPos);
 }
 
 void TextureEntry::deserialize(std::ifstream &stream)
@@ -32,7 +41,18 @@ void TextureEntry::deserialize(std::ifstream &stream)
     _imageSize = StreamHelper::read<uint32_t>(stream);
     _paletteOffset = StreamHelper::read<uint32_t>(stream);
     _imageOffset = StreamHelper::read<uint32_t>(stream);
+    std::streampos lastPos = stream.tellg();
+    stream.seekg(_imageOffset, std::ios::beg);
+    _imageData.resize(_imageSize);
+    StreamHelper::read(stream, _imageData.data(), _imageSize);
+    if (_format.getValue() == Format::Value::C4 || _format.getValue() == Format::Value::C8) {
+        stream.seekg(_paletteOffset, std::ios::beg);
+        _paletteData.resize(_paletteSize);
+        StreamHelper::read(stream, _paletteData.data(), _paletteSize);
+    }
+    stream.seekg(lastPos);
 }
+
 
 uint8_t TextureEntry::getBpp() const
 {
@@ -89,4 +109,14 @@ Format TextureEntry::asGXFormat() const
             break;
     }
     return gxFormat;
+}
+
+std::vector<uint8_t> TextureEntry::getPaletteData() const
+{
+    return _paletteData;
+}
+
+std::vector<uint8_t> TextureEntry::getImageData() const
+{
+    return _imageData;
 }

@@ -5,7 +5,10 @@
     #include <vector>
 
     #include "PatternEntry.hpp"
-    #include "FrameEntry.hpp"
+    #include "Bank.hpp"
+    #include "TextureEntry.hpp"
+    #include "Frame.hpp"
+    #include "Layer.hpp"
 
 class ATBFile : public Serializable {
     public:
@@ -16,13 +19,10 @@ class ATBFile : public Serializable {
     protected:
     private:
         std::vector<PatternEntry> _patterns;
-        std::vector<std::vector<FrameEntry>> _banks;
-};
-
-struct Bank {
-    uint16_t frames;
-    uint16_t padding;
-    uint32_t offset;
+        std::vector<Bank> _banks;
+        std::vector<TextureEntry> _textures;
+        std::vector<Frame> _frames;
+        std::vector<Layer> _layers;
 };
 
 #endif /* !ATBFILE_HPP_ */

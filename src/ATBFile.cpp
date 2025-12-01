@@ -30,30 +30,30 @@ void ATBFile::deserialize(std::ifstream &stream)
 
     uint32_t textureOffset = StreamHelper::read<uint32_t>(stream);
 
-    stream.seekg(patternOffset, std::ios::beg);
-    _patterns.reserve(numPatterns);
-    for (uint16_t i = 0; i < numPatterns; ++i)
-        _patterns.emplace_back(stream);
-    stream.seekg(bankOffset, std::ios::beg);
-    _banks.reserve(numBanks);
-    std::vector<Bank> banksInfo;
-    banksInfo.resize(numBanks);
-    StreamHelper::read<Bank>(stream, banksInfo.data(), numBanks);
-    for (uint16_t i = 0; i < numBanks; ++i) {
-        _banks.emplace_back();
-        stream.seekg(banksInfo[i].offset, std::ios::beg);
-        _banks[i].reserve(banksInfo[i].frames);
-        for (uint16_t j = 0; j < banksInfo[i].frames; ++j)
-            _banks[i].emplace_back(stream);
+    _textures.resize(numTextures);
+    StreamHelper::read(stream, _textures.data(), numTextures);
+    _banks.resize(numBanks);
+    for (uint16_t i = 0; i < numBanks; i++) {
+        Bank &bank = _banks.emplace_back(stream);
+        std::streampos lastPos = stream.tellg();
+        stream.seekg(bank.getFrameOffset(), std::ios::beg);
+        size_t currentSize = _frames.size();
+        size_t nbFrames = bank.getFrames();
+        _frames.resize(_frames.size() + nbFrames);
+        StreamHelper::read(stream, _frames.data() + currentSize, nbFrames);
+        stream.seekg(lastPos);
     }
-    stream.seekg(textureOffset, std::ios::beg);
-    std::vector<TextureEntry> textures;
-    textures.resize(numTextures);
-    StreamHelper::read<TextureEntry>(stream, textures.data(), numTextures);
-    for (uint16_t i = 0; i < numTextures; ++i) {
-
+    _patterns.resize(numPatterns);
+    for (uint16_t i = 0; i < numPatterns; i++) {
+        PatternEntry &pattern = _patterns.emplace_back(stream);
+        std::streampos lastPos = stream.tellg();
+        stream.seekg(pattern.getLayerOffset(), std::ios::beg);
+        size_t currentSize = _layers.size();
+        size_t nbLayers = pattern.getLayers();
+        _layers.resize(_layers.size() + nbLayers);
+        StreamHelper::read(stream, _layers.data() + currentSize, nbLayers);
+        stream.seekg(lastPos);
     }
-
 }
 
 void ATBFile::serialize(std::ofstream &stream) const

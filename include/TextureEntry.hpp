@@ -2,6 +2,7 @@
     #define TEXTUREENTRY_HPP_
 
     #include "Format.hpp"
+    #include <vector>
 
 
 class TextureEntry : public Serializable {
@@ -20,6 +21,8 @@ class TextureEntry : public Serializable {
         uint32_t getPaletteOffset() const;
         uint32_t getImageOffset() const;
         Format asGXFormat() const;
+        std::vector<uint8_t> getPaletteData() const;
+        std::vector<uint8_t> getImageData() const;
         ~TextureEntry() = default;
 
     protected:
@@ -31,7 +34,9 @@ class TextureEntry : public Serializable {
         uint16_t _height;
         uint32_t _imageSize;
         uint32_t _paletteOffset;
+        std::vector<uint8_t> _paletteData;
         uint32_t _imageOffset;
+        std::vector<uint8_t> _imageData;
 };
 
 #endif /* !TEXTUREENTRY_HPP_ */

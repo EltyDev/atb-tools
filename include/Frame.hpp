@@ -1,30 +1,28 @@
-#ifndef FRAMEENTRY_HPP_
-    #define FRAMEENTRY_HPP_
-
-    #include <cstdint>
-    #include <fstream>
+#ifndef FRAME_HPP_
+    #define FRAME_HPP_
 
     #include "Serializable.hpp"
 
-class FrameEntry : public Serializable {
+class Frame : public Serializable {
     public:
-        FrameEntry(std::ifstream &file);
-        FrameEntry(uint16_t patternIndex, uint16_t frameLength, uint16_t shiftX, uint16_t shiftY, uint16_t flip);
-        ~FrameEntry() = default;
+        Frame() = default;
+        Frame(uint16_t patternIndex, uint16_t length, uint16_t shiftX, uint16_t shiftY, uint16_t flip);
+        ~Frame() = default;
         void serialize(std::ofstream &stream) const override;
         void deserialize(std::ifstream &stream) override;
         uint16_t getPatternIndex() const;
-        uint16_t getFrameLength() const;
+        uint16_t getLength() const;
         uint16_t getShiftX() const;
         uint16_t getShiftY() const;
         uint16_t getFlip() const;
     protected:
     private:
         uint16_t _patternIndex;
-        uint16_t _frameLength;
+        uint16_t _length;
         uint16_t _shiftX;
         uint16_t _shiftY;
         uint16_t _flip;
-};
+        uint16_t _unk;
+    };
 
-#endif /* !FRAMEENTRY_HPP_ */
+#endif /* !FRAME_HPP_ */
