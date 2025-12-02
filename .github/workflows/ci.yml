@@ -25,99 +25,143 @@ jobs:
           name: build-artifacts
           path: build/
 
-  test-parallel-xargs:
+  test:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Download built binary
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: ./build
-      - name: Download atb files
-        run: |
-          curl -L -o atb_files.tar.xz https://github.com/EltyDev/atb-tools/releases/download/ci-test/atb_files.tar.xz
-          tar -xJf atb_files.tar.xz
-      - name: Run tests in parallel with xargs
-        id: run-tests
-        continue-on-error: true
-        run: |
-          chmod +x ./build/bin/atb-tools
-          
-          # Créer un script pour tester un fichier
-          cat > test_single_file.sh << 'EOF'
-          #!/bin/bash
-          file="$1"
-          file_basename=$(basename "$file")
-          
+    - uses: actions/checkout@v4
+    - name: Download built binary
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: ./build
+    - name: Download atb files
+      run: |
+        curl -L -o atb_files.tar.xz https://github.com/EltyDev/atb-tools/releases/download/ci-test/atb_files.tar.xz
+        tar -xJf atb_files.tar.xz
+    - name: Run tests in parallel
+      id: run-tests
+      continue-on-error: true
+      run: |
+        chmod +x ./build/bin/atb-tools
+        
+        cat > test_single_file.sh << 'EOF'
+        #!/bin/bash
+        file="$1"
+        file_basename=$(basename "$file")
+        output_file="${file%.atb}_test.atb"
+        
+        log_file="/tmp/test_log_$$.txt"
+        result_file="/tmp/test_result_$$.txt"
+        
+        {
           echo "::group::Testing $file_basename"
-          
-          output_file="${file%.atb}_test.atb"
           
           ./build/bin/atb-tools test "$file"
           ret=$?
           
           if [ $ret -ne 0 ]; then
             echo "❌ Program failed for $file_basename"
-            echo "failed:program_failed:$file_basename" >> /tmp/test_results.$$
+            echo "failed:program_failed:$file_basename" > "$result_file"
           elif [ ! -f "$output_file" ]; then
             echo "❌ Output file missing for $file_basename"
-            echo "failed:output_missing:$file_basename" >> /tmp/test_results.$$
-          elif ! diff "$file" "$output_file" > /dev/null; then
+            echo "failed:output_missing:$file_basename" > "$result_file"
+          elif ! diff "$file" "$output_file" > /dev/null 2>&1; then
             echo "❌ Differences found for $file_basename"
-            echo "failed:differences_found:$file_basename" >> /tmp/test_results.$$
+            echo "failed:differences_found:$file_basename" > "$result_file"
           else
             echo "✅ $file_basename passed"
-            echo "passed:::$file_basename" >> /tmp/test_results.$$
+            echo "passed:::$file_basename" > "$result_file"
           fi
           
           echo "::endgroup::"
-          EOF
-          
-          chmod +x test_single_file.sh
-          
-          # Initialiser le fichier de résultats
-          > /tmp/test_results
-          
-          # Trouver et tester tous les fichiers en parallèle
-          find . -name "*.atb" -type f | \
-            xargs -P ${{ env.PARALLEL_JOBS }} -I {} bash -c '
-              ./test_single_file.sh "{}"
-              cat /tmp/test_results.$$ >> /tmp/test_results
-              rm -f /tmp/test_results.$$
-            '
-          
-          # Compter les résultats
-          passed_count=$(grep -c "^passed" /tmp/test_results || true)
-          failed_count=$(grep -c "^failed" /tmp/test_results || true)
-          total_count=$((passed_count + failed_count))
-          
-          echo "Total files tested: $total_count"
+        } > "$log_file"
+        
+        cat "$log_file"
+        cat "$result_file"
+        EOF
+        
+        chmod +x test_single_file.sh
+        
+        > /tmp/all_test_results
+        
+        find . -name "*.atb" -type f | xargs -P ${{ env.PARALLEL_JOBS }} -I {} bash -c '
+          ./test_single_file.sh "{}" 2>&1 | tee -a /tmp/test_output.log
+          # Récupérer le résultat de ce fichier
+          for result_file in /tmp/test_result_*.txt; do
+            if [ -f "$result_file" ]; then
+              cat "$result_file" >> /tmp/all_test_results
+              rm -f "$result_file"
+            fi
+          done
+          rm -f /tmp/test_log_*.txt
+        '
+        
+        passed_count=$(grep -c "^passed" /tmp/all_test_results 2>/dev/null || echo 0)
+        failed_count=$(grep -c "^failed" /tmp/all_test_results 2>/dev/null || echo 0)
+        total_count=$((passed_count + failed_count))
+        
+        echo ""
+        echo "=== TEST SUMMARY ==="
+        echo "Total files tested: $total_count"
+        echo "Passed: $passed_count"
+        echo "Failed: $failed_count"
+        echo ""
+        
+        if [ $failed_count -gt 0 ]; then
+          echo "test_failed=true" >> $GITHUB_OUTPUT
+          echo "FAILED FILES:"
+          grep "^failed" /tmp/all_test_results | cut -d':' -f3
+        else
+          echo "test_failed=false" >> $GITHUB_OUTPUT
+        fi
+        
+        mkdir -p test_artifacts
+        
+        mkdir -p test_artifacts/failed_inputs
+        grep "^failed" /tmp/all_test_results | cut -d':' -f3 | while read -r f; do
+          if [ -f "$f" ]; then
+            cp "$f" test_artifacts/failed_inputs/
+          fi
+        done
+        
+        cp /tmp/all_test_results test_artifacts/results.txt
+        
+        # Créer un résumé détaillé
+        {
+          echo "ATB Test Run Summary"
+          echo "===================="
+          echo "Date: $(date)"
+          echo "Total files: $total_count"
           echo "Passed: $passed_count"
           echo "Failed: $failed_count"
-          
+          echo ""
           if [ $failed_count -gt 0 ]; then
-            echo "test_failed=true" >> $GITHUB_OUTPUT
-            echo "FAILED FILES:"
-            grep "^failed" /tmp/test_results | cut -d':' -f3
-          else
-            echo "test_failed=false" >> $GITHUB_OUTPUT
+            echo "Failed files details:"
+            echo "-------------------"
+            grep "^failed" /tmp/all_test_results | while read -r line; do
+              status=$(echo "$line" | cut -d':' -f1)
+              reason=$(echo "$line" | cut -d':' -f2)
+              file=$(echo "$line" | cut -d':' -f3)
+              echo "- $file: $reason"
+            done
           fi
-          
-          # Sauvegarder les résultats
-          mkdir -p test_outputs
-          cp /tmp/test_results test_outputs/results.txt
-          
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: atb-parallel-test-results
-          path: test_outputs/
-          retention-days: 7
-          
-      - name: Check final results
-        if: steps.run-tests.outputs.test_failed == 'true'
-        run: |
-          echo "Some tests failed. Check the test results artifact for details."
-          exit 1
+        } > test_artifacts/summary.txt
+        
+        # Créer une archive si des fichiers ont échoué
+        if [ $failed_count -gt 0 ] && [ -d "test_artifacts/failed_inputs" ]; then
+          tar -cJf test_artifacts/failed_inputs.tar.xz -C test_artifacts/failed_inputs .
+        fi
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: atb-test-artifacts
+        path: test_artifacts/
+        retention-days: 7
+        
+    - name: Check final results
+      if: steps.run-tests.outputs.test_failed == 'true'
+      run: |
+        echo "Some tests failed. Check the 'atb-test-artifacts' artifact for details."
+        exit 1
