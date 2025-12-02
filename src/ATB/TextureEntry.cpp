@@ -1,4 +1,4 @@
-#include "TextureEntry.hpp"
+#include "ATB/TextureEntry.hpp"
 #include "StreamHelper.hpp"
 
 TextureEntry::TextureEntry(std::ifstream &stream)
@@ -22,12 +22,16 @@ void TextureEntry::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _paletteOffset);
     StreamHelper::write(stream, _imageOffset);
     std::streampos lastPos = stream.tellp();
+    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset))
+        StreamHelper::write<uint8_t>(stream, 0x88);
+    if (_format.getValue() == Format::ATBValue::CI4 || _format.getValue() == Format::ATBValue::CI8) {
+        stream.seekp(_paletteOffset, std::ios::beg);
+        StreamHelper::write(stream, _paletteData.data(), _paletteSize * 2);
+    }
+    while (stream.tellp() < static_cast<std::streampos>(_imageOffset))
+        StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(_imageOffset, std::ios::beg);
     StreamHelper::write(stream, _imageData.data(), _imageSize);
-    if (_format.getValue() == Format::Value::C4 || _format.getValue() == Format::Value::C8) {
-        stream.seekp(_paletteOffset, std::ios::beg);
-        StreamHelper::write(stream, _paletteData.data(), _paletteSize);
-    }
     stream.seekp(lastPos);
 }
 
@@ -45,10 +49,10 @@ void TextureEntry::deserialize(std::ifstream &stream)
     stream.seekg(_imageOffset, std::ios::beg);
     _imageData.resize(_imageSize);
     StreamHelper::read(stream, _imageData.data(), _imageSize);
-    if (_format.getValue() == Format::Value::C4 || _format.getValue() == Format::Value::C8) {
+    if (_format.getValue() == Format::ATBValue::CI4 || _format.getValue() == Format::ATBValue::CI8) {
         stream.seekg(_paletteOffset, std::ios::beg);
-        _paletteData.resize(_paletteSize);
-        StreamHelper::read(stream, _paletteData.data(), _paletteSize);
+        _paletteData.resize(_paletteSize * 2);
+        StreamHelper::read(stream, _paletteData.data(), _paletteSize * 2);
     }
     stream.seekg(lastPos);
 }
@@ -94,23 +98,6 @@ uint32_t TextureEntry::getImageOffset() const
     return this->_imageOffset;
 }
 
-Format TextureEntry::asGXFormat() const
-{
-    Format gxFormat = _format;
-    switch (_format.getValue()) {
-        case Format::Value::C8:
-            if (_bpp == 24)
-                throw std::runtime_error("C8 format with 24 bpp cannot be converted to GX format");
-            break;
-        case Format::Value::A8:
-            gxFormat = Format(Format::Value::RGBA32);
-            break;
-        default:
-            break;
-    }
-    return gxFormat;
-}
-
 std::vector<uint8_t> TextureEntry::getPaletteData() const
 {
     return _paletteData;
@@ -119,4 +106,10 @@ std::vector<uint8_t> TextureEntry::getPaletteData() const
 std::vector<uint8_t> TextureEntry::getImageData() const
 {
     return _imageData;
+}
+
+size_t TextureEntry::getSize() const
+{
+    return sizeof(_bpp) + _format.getSize() + sizeof(_paletteSize) + sizeof(_width) + sizeof(_height) +
+        sizeof(_imageSize) + sizeof(_paletteOffset) + sizeof(_imageOffset);
 }

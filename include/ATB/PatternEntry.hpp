@@ -11,6 +11,7 @@ class PatternEntry : public Serializable {
         ~PatternEntry() = default;
         void serialize(std::ofstream &stream) const override;
         void deserialize(std::ifstream &stream) override;
+        size_t getSize() const override;
         uint16_t getLayers() const;
         uint16_t getCenterX() const;
         uint16_t getCenterY() const;
@@ -24,6 +25,7 @@ class PatternEntry : public Serializable {
         uint16_t _centerY;
         uint16_t _width;
         uint16_t _height;
+        uint16_t _padding;
         uint32_t _layerOffset;
 };
 

@@ -9,6 +9,7 @@ class Layer : public Serializable {
         Layer(uint8_t alpha, uint8_t flip, uint16_t texture_index, uint16_t texcoord_upper_left_x, uint16_t texcoord_upper_left_y, uint16_t texcoord_width, uint16_t texcoord_height, uint16_t shift_x, uint16_t shift_y, uint16_t upper_left_vertex_x, uint16_t upper_left_vertex_y, uint16_t upper_right_vertex_x, uint16_t upper_right_vertex_y, uint16_t lower_right_vertex_x, uint16_t lower_right_vertex_y, uint16_t lower_left_vertex_x, uint16_t lower_left_vertex_y);
         void serialize(std::ofstream &stream) const override;
         void deserialize(std::ifstream &stream) override;
+        size_t getSize() const override;
         uint8_t getAlpha() const;
         uint8_t getFlip() const;
         uint16_t getTextureIndex() const;

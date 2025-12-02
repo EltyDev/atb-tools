@@ -1,4 +1,4 @@
-#include "Layer.hpp"
+#include "ATB/Layer.hpp"
 #include "StreamHelper.hpp"
 
 Layer::Layer(uint8_t alpha, uint8_t flip, uint16_t texture_index, uint16_t texcoord_upper_left_x, uint16_t texcoord_upper_left_y, uint16_t texcoord_width, uint16_t texcoord_height, uint16_t shift_x, uint16_t shift_y, uint16_t upper_left_vertex_x, uint16_t upper_left_vertex_y, uint16_t upper_right_vertex_x, uint16_t upper_right_vertex_y, uint16_t lower_right_vertex_x, uint16_t lower_right_vertex_y, uint16_t lower_left_vertex_x, uint16_t lower_left_vertex_y)
@@ -131,4 +131,12 @@ uint16_t Layer::getLowerLeftVertexX() const
 uint16_t Layer::getLowerLeftVertexY() const
 {
     return this->_lower_left_vertex_y;
+}
+
+size_t Layer::getSize() const
+{
+    return sizeof(_alpha) + sizeof(_flip) + sizeof(_texture_index) + sizeof(_texcoord_upper_left_x) + sizeof(_texcoord_upper_left_y) +
+        sizeof(_texcoord_width) + sizeof(_texcoord_height) + sizeof(_shift_x) + sizeof(_shift_y) +
+        sizeof(_upper_left_vertex_x) + sizeof(_upper_left_vertex_y) + sizeof(_upper_right_vertex_x) + sizeof(_upper_right_vertex_y) +
+        sizeof(_lower_right_vertex_x) + sizeof(_lower_right_vertex_y) + sizeof(_lower_left_vertex_x) + sizeof(_lower_left_vertex_y);
 }

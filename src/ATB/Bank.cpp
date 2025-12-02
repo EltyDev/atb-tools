@@ -1,8 +1,8 @@
-#include "Bank.hpp"
+#include "ATB/Bank.hpp"
 #include "StreamHelper.hpp"
 
-Bank::Bank(uint16_t frames, uint16_t padding, uint32_t frameOffset)
-    : _frames(frames), _padding(padding), _frameOffset(frameOffset)
+Bank::Bank(uint16_t frames, uint32_t frameOffset)
+    : _frames(frames), _frameOffset(frameOffset), _padding(0)
 {
 }
 
@@ -30,12 +30,12 @@ uint16_t Bank::getFrames() const
     return this->_frames;
 }
 
-uint16_t Bank::getPadding() const
-{
-    return this->_padding;
-}
-
 uint32_t Bank::getFrameOffset() const
 {
     return this->_frameOffset;
+}
+
+size_t Bank::getSize() const
+{
+    return sizeof(_frames) + sizeof(_padding) + sizeof(_frameOffset);
 }

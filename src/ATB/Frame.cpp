@@ -1,10 +1,9 @@
-#include "Frame.hpp"
+#include "ATB/Frame.hpp"
 #include "StreamHelper.hpp"
 
-Frame::Frame(uint16_t patternIndex, uint16_t length, uint16_t shiftX, uint16_t shiftY, uint16_t flip)
+Frame::Frame(uint16_t patternIndex, int16_t length, uint16_t shiftX, uint16_t shiftY, uint16_t flip)
     : _patternIndex(patternIndex), _length(length), _shiftX(shiftX), _shiftY(shiftY), _flip(flip), _unk(0)
 {
-
 }
 
 void Frame::serialize(std::ofstream &stream) const
@@ -20,7 +19,7 @@ void Frame::serialize(std::ofstream &stream) const
 void Frame::deserialize(std::ifstream &stream)
 {
     _patternIndex = StreamHelper::read<uint16_t>(stream);
-    _length = StreamHelper::read<uint16_t>(stream);
+    _length = StreamHelper::read<int16_t>(stream);
     _shiftX = StreamHelper::read<uint16_t>(stream);
     _shiftY = StreamHelper::read<uint16_t>(stream);
     _flip = StreamHelper::read<uint16_t>(stream);
@@ -32,7 +31,7 @@ uint16_t Frame::getPatternIndex() const
     return this->_patternIndex;
 }
 
-uint16_t Frame::getLength() const
+int16_t Frame::getLength() const
 {
     return this->_length;
 }
@@ -50,4 +49,9 @@ uint16_t Frame::getShiftY() const
 uint16_t Frame::getFlip() const
 {
     return this->_flip;
+}
+
+size_t Frame::getSize() const
+{
+    return sizeof(_patternIndex) + sizeof(_length) + sizeof(_shiftX) + sizeof(_shiftY) + sizeof(_flip) + sizeof(_unk);
 }
