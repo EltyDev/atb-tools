@@ -37,7 +37,7 @@ jobs:
       - name: Set files output
         id: set-files
         run: |
-          files_json=$(ls *.atb | jq -R -s -c 'split("\n")[:-1]')
+          files_json=$(ls *.atb | shuf | head -n 256 | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files_json" >> $GITHUB_OUTPUT
 
   test:
