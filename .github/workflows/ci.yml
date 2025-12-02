@@ -54,10 +54,10 @@ jobs:
       - name: Run test for ${{ matrix.file }}
         run: |
           chmod +x ./atb-tools
-          OUTPUT_FILE="${{ matrix.file%.atb }}_test.atb"
+          OUTPUT_FILE="${matrix_file%.atb}_test.atb"
           EXPECTED_FILE="expected/$OUTPUT_FILE"
       
-          ./atb-tools test "${{ matrix.file }}"
+          ./atb-tools test "$matrix_file"
           if [ $? -ne 0 ]; then
               echo "❌ Program failed"
               exit 1
