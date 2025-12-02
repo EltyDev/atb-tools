@@ -128,15 +128,7 @@ jobs:
             cp "$f" test_artifacts/failed_inputs/
           fi
         done
-        
-        mkdir -p test_artifacts/failed_outputs
-        grep "^failed" /tmp/all_test_results | cut -d':' -f3 | while read -r f; do
-          output_file="${f%.atb}_test.atb"
-          if [ -f "$output_file" ]; then
-            cp "$output_file" test_artifacts/failed_outputs/
-          fi
-        done
-        
+                
         cp /tmp/all_test_results test_artifacts/results.txt
         
         {
@@ -162,6 +154,7 @@ jobs:
         if [ $failed_count -gt 0 ] && [ -d "test_artifacts/failed_inputs" ]; then
           tar -cJf test_artifacts/failed_inputs.tar.xz -C test_artifacts/failed_inputs .
         fi
+        rm -fr test_artifacts/failed_inputs
 
     - name: Upload test artifacts
       uses: actions/upload-artifact@v4
