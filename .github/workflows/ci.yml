@@ -39,8 +39,7 @@ jobs:
             echo "::group::Testing $matrix_file"
             echo "Testing $matrix_file" >> "$log_file"
 
-            ```
-            OUTPUT_FILE="{matrix_file%.atb}_test.atb"
+            OUTPUT_FILE="${matrix_file%.atb}_test.atb"
 
             ./build/bin/atb-tools test "$matrix_file"
             ret=$?
@@ -64,8 +63,6 @@ jobs:
             fi
 
             echo "::endgroup::"
-            ```
-
           done
 
           echo "Summary: $successes / $total tests passed" | tee -a "$log_file"
@@ -81,4 +78,3 @@ jobs:
           path: |
             test_outputs
             log.txt
-
