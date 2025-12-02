@@ -31,7 +31,6 @@ jobs:
             echo "::group::Testing $matrix_file"
             
             OUTPUT_FILE="${matrix_file%.atb}_test.atb"
-            EXPECTED_FILE="expected/$OUTPUT_FILE"
             
             ./build/bin/atb-tools test "$matrix_file"
             if [ $? -ne 0 ]; then
@@ -44,7 +43,7 @@ jobs:
                 exit 1
             fi
             
-            diff "$EXPECTED_FILE" "$OUTPUT_FILE" || (echo "❌ Differences found for $matrix_file" && exit 1)
+            diff $matrix_file "$OUTPUT_FILE" || (echo "❌ Differences found for $matrix_file" && exit 1)
             
             echo "✅ $matrix_file passed"
             echo "::endgroup::"
