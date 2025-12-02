@@ -51,8 +51,9 @@ jobs:
         file_basename=$(basename "$file")
         output_file="${file%.atb}_test.atb"
         
-        log_file="/tmp/test_log_$$.txt"
-        result_file="/tmp/test_result_$$.txt"
+        pid=$$
+        log_file="/tmp/test_log_${pid}.txt"
+        result_file="/tmp/test_result_${pid}.txt"
         
         {
           echo "::group::Testing $file_basename"
@@ -78,24 +79,27 @@ jobs:
         } > "$log_file"
         
         cat "$log_file"
-        cat "$result_file"
+        rm -f "$log_file"
         EOF
         
         chmod +x test_single_file.sh
         
         > /tmp/all_test_results
         
-        find . -name "*.atb" -type f | xargs -P ${{ env.PARALLEL_JOBS }} -I {} bash -c '
-          ./test_single_file.sh "{}" 2>&1 | tee -a /tmp/test_output.log
-          # Récupérer le résultat de ce fichier
-          for result_file in /tmp/test_result_*.txt; do
-            if [ -f "$result_file" ]; then
-              cat "$result_file" >> /tmp/all_test_results
-              rm -f "$result_file"
-            fi
-          done
-          rm -f /tmp/test_log_*.txt
-        '
+        find . -name "*.atb" -type f | xargs -P ${{ env.PARALLEL_JOBS }} -I {} bash -c './test_single_file.sh "{}"'
+        
+        for result_file in /tmp/test_result_*.txt; do
+          if [ -f "$result_file" ]; then
+            cat "$result_file" >> /tmp/all_test_results
+            rm -f "$result_file"
+          fi
+        done
+        
+        if [ ! -s /tmp/all_test_results ]; then
+          echo "ERROR: No test results found!"
+          echo "test_failed=true" >> $GITHUB_OUTPUT
+          exit 1
+        fi
         
         passed_count=$(grep -c "^passed" /tmp/all_test_results 2>/dev/null || echo 0)
         failed_count=$(grep -c "^failed" /tmp/all_test_results 2>/dev/null || echo 0)
@@ -125,9 +129,16 @@ jobs:
           fi
         done
         
+        mkdir -p test_artifacts/failed_outputs
+        grep "^failed" /tmp/all_test_results | cut -d':' -f3 | while read -r f; do
+          output_file="${f%.atb}_test.atb"
+          if [ -f "$output_file" ]; then
+            cp "$output_file" test_artifacts/failed_outputs/
+          fi
+        done
+        
         cp /tmp/all_test_results test_artifacts/results.txt
         
-        # Créer un résumé détaillé
         {
           echo "ATB Test Run Summary"
           echo "===================="
@@ -148,7 +159,6 @@ jobs:
           fi
         } > test_artifacts/summary.txt
         
-        # Créer une archive si des fichiers ont échoué
         if [ $failed_count -gt 0 ] && [ -d "test_artifacts/failed_inputs" ]; then
           tar -cJf test_artifacts/failed_inputs.tar.xz -C test_artifacts/failed_inputs .
         fi
