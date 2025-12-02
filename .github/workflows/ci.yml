@@ -16,7 +16,7 @@ jobs:
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         name: Create artifact
         with:
           name: atb-tools
@@ -46,9 +46,9 @@ jobs:
         file: ${{ fromJSON(needs.prepare.outputs.files) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download compiled program
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: atb-tools
       - name: Run test for ${{ matrix.file }}
