@@ -15,6 +15,17 @@ int unpackATB(const std::filesystem::path filePath) {
     return (0);
 }
 
+int test(const std::filesystem::path filePath) {
+    ATBFile atbFile(filePath);
+    std::string testPath = filePath.stem().string() + "_test.atb";
+    std::ofstream output(testPath, std::ios::binary);
+    if (!output.is_open())
+        throw std::runtime_error("Could not create file: " + testPath);
+    atbFile.serialize(output);
+    output.close();
+    return (0);
+}
+
 int main(const int argc, char const * const *argv) {
     const std::filesystem::path path(argv[0]);
     const std::string usage = "Usage: " + path.filename().string() + " <pack/unpack> <file>";
@@ -28,11 +39,12 @@ int main(const int argc, char const * const *argv) {
             return packATB(std::filesystem::path(argv[2]));
         else if (!strcmp(argv[1], "unpack"))
             return unpackATB(std::filesystem::path(argv[2]));
-        else {
+        else if (!strcmp(argv[1], "test"))
+            test(std::filesystem::path(argv[2]));
+        else
             goto error_usage;
-        }
     } catch (const std::exception &e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return (1);
     }
     return (0);
