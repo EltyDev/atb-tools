@@ -2,6 +2,7 @@
     #define LAYER_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class Layer : public Serializable {
     public:

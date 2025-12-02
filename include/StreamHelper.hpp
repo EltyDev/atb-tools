@@ -1,8 +1,12 @@
-#include <bit>
-#include <cstring>
-#include <fstream>
-#include <type_traits>
-#include "Serializable.hpp"
+#ifndef STREAMHELPER_HPP_
+    #define STREAMHELPER_HPP_
+
+    #include <bit>
+    #include <cstring>
+    #include <fstream>
+    #include <type_traits>
+    #include <algorithm>
+    #include "Serializable.hpp"
 
 class StreamHelper {
 public:
@@ -95,3 +99,5 @@ public:
             buffer[i] = read<T>(stream);
     }
 };
+
+#endif /* !STREAMHELPER_HPP_ */

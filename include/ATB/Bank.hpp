@@ -2,6 +2,7 @@
     #define BANK_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class Bank : public Serializable {
     public:

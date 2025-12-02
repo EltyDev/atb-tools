@@ -2,6 +2,7 @@
     #define FRAME_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class Frame : public Serializable {
     public:

@@ -2,6 +2,7 @@
     #define HEADER_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 #define MAGIC_NUMBER 0x20AF30
 

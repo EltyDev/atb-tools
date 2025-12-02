@@ -2,6 +2,7 @@
     #define IMAGEDESCRIPTION_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class ImageDescription : public Serializable {
     public:

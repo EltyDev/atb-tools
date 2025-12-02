@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <cstring>
 #include "ATB/ATBFile.hpp"
 
 int packATB(const std::filesystem::path filePath) {

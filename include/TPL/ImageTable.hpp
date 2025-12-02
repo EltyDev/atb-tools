@@ -2,6 +2,7 @@
     #define IMAGETABLE_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class ImageTable : public Serializable {
     public:

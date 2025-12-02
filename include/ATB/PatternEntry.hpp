@@ -2,6 +2,7 @@
     #define PATTERNENTRY_HPP_
 
     #include "Serializable.hpp"
+    #include <cstdint>
 
 class PatternEntry : public Serializable {
     public:
