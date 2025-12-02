@@ -22,13 +22,13 @@ void TextureEntry::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _paletteOffset);
     StreamHelper::write(stream, _imageOffset);
     std::streampos lastPos = stream.tellp();
-    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset))
+    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset) && stream.tellp() % 16 == 0)
         StreamHelper::write<uint8_t>(stream, 0x88);
     if (_format.getValue() == Format::ATBValue::CI4 || _format.getValue() == Format::ATBValue::CI8) {
         stream.seekp(_paletteOffset, std::ios::beg);
         StreamHelper::write(stream, _paletteData.data(), _paletteSize * 2);
     }
-    while (stream.tellp() < static_cast<std::streampos>(_imageOffset))
+    while (stream.tellp() < static_cast<std::streampos>(_imageOffset) && stream.tellp() % 16 == 0)
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(_imageOffset, std::ios::beg);
     StreamHelper::write(stream, _imageData.data(), _imageSize);
