@@ -2,7 +2,7 @@ name: Test atb files
 
 on:
   push:
-  branches: [main]
+    branches: [main]
   pull_request:
 env:
   BUILD_TYPE: Release
