@@ -48,5 +48,4 @@ jobs:
             
             echo "✅ $matrix_file passed"
             echo "::endgroup::"
-      done
-```
+          done
