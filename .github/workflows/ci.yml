@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Pull submodules
+        run: git submodule update --init --recursive
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
@@ -29,7 +31,7 @@ jobs:
     steps:
       - name: Retrieves atb files
         run: |
-          curl -L -o atb_files.tar.xz https://github.com/EltyDev/atb-tools/releases/download/untagged-91786d24ac46249169c2/atb_files.tar.xz
+          curl -L -o atb_files.tar.xz https://github.com/EltyDev/atb-tools/releases/download/ci-test/atb_files.tar.xz
           tar -xJf atb_files.tar.xz
       
       - name: Set files output
