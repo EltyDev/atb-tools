@@ -45,3 +45,6 @@
 
 # CMake build
 build/
+
+# Test files
+*.atb
