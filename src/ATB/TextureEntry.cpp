@@ -22,14 +22,10 @@ void TextureEntry::serialize(std::ostream &stream) const
     StreamHelper::write(stream, _paletteOffset);
     StreamHelper::write(stream, _imageOffset);
     std::streampos lastPos = stream.tellp();
-    while (stream.tellp() % 16 != 0)
-        StreamHelper::write<uint8_t>(stream, 0x88);
     if (_format.getValue() == Format::ATBValue::CI4 || _format.getValue() == Format::ATBValue::CI8) {
         stream.seekp(_paletteOffset, std::ios::beg);
         StreamHelper::write(stream, _paletteData.data(), _paletteSize * 2);
     }
-    while (stream.tellp() % 16 != 0)
-        StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(_imageOffset, std::ios::beg);
     StreamHelper::write(stream, _imageData.data(), _imageSize);
     stream.seekp(lastPos);
@@ -117,14 +113,22 @@ size_t TextureEntry::getSize() const
 void TextureEntry::writePadding(std::fstream &stream) const
 {
     stream.seekp(getSize(), std::ios::cur);
+    stream.seekg(stream.tellp(), std::ios::beg);
     std::streampos lastPos = stream.tellp();
-    if (!StreamHelper::isFree(stream, _paletteOffset))
+    std::streampos nextPos = (16 - static_cast<size_t>(stream.tellp()) % 16);
+    if (!StreamHelper::isFree(stream, stream.tellp() + nextPos)) {
+        stream.seekp(lastPos);
         return;
-    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset))
-        StreamHelper::write<uint8_t>(stream, 0x88);
+    }
     stream.seekp(lastPos);
-    if (!StreamHelper::isFree(stream, _imageOffset))
+    while (stream.tellp() % 16 != 0)
+        StreamHelper::write<uint8_t>(stream, 0x88);
+    stream.seekg(stream.tellp());
+    if (!StreamHelper::isFree(stream, _imageOffset)) {
+        stream.seekp(lastPos);
         return;
+    }
+    stream.seekp(lastPos);
     while (stream.tellp() < static_cast<std::streampos>(_imageOffset))
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(lastPos);

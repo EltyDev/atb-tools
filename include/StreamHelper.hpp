@@ -101,7 +101,7 @@ public:
 
     static bool isFree(std::fstream &stream, std::streampos pos)
     {
-        while (stream.tellp() < pos) {
+        while (stream.tellg() < pos) {
             uint8_t byte;
             stream.read(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
             if (byte != 0x00)

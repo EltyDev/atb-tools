@@ -355,7 +355,10 @@ void ATBFile::exportToFile(const std::filesystem::path path) const
     if (!output.is_open())
         throw std::runtime_error("Could not create file: " + path.string());
     serialize(output);
-    for (const TextureEntry &texture : getTextures())
+    output.seekp(_textureOffset, std::ios::beg);
+    for (const TextureEntry &texture : getTextures()) {
+        
         texture.writePadding(output);
+    }
     output.close();
 }
