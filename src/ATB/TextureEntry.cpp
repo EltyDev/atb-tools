@@ -123,13 +123,21 @@ void TextureEntry::writePadding(std::fstream &stream) const
     stream.seekp(lastPos);
     while (stream.tellp() % 16 != 0)
         StreamHelper::write<uint8_t>(stream, 0x88);
-    stream.seekg(stream.tellp());
-    if (!StreamHelper::isFree(stream, _imageOffset)) {
+    uint32_t paletteOffset = getPaletteOffset();
+    stream.seekg(paletteOffset + (_paletteSize * 2), std::ios::beg);
+    if (StreamHelper::isFree(stream, _imageOffset)) {
+        stream.seekp(paletteOffset + (_paletteSize * 2), std::ios::beg);
+        while (stream.tellp() < _imageOffset)
+            StreamHelper::write<uint8_t>(stream, 0x88);
+    }
+    stream.seekg(lastPos + nextPos);
+    std::streampos minPos = std::min(_imageOffset, paletteOffset);
+    if (!StreamHelper::isFree(stream, minPos)) {
         stream.seekp(lastPos);
         return;
     }
     stream.seekp(lastPos);
-    while (stream.tellp() < static_cast<std::streampos>(_imageOffset))
+    while (stream.tellp() < minPos)
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(lastPos);
 }
