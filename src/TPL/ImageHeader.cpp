@@ -6,14 +6,14 @@ ImageHeader::ImageHeader(uint16_t height, uint16_t width, const Format &format, 
 {
 }
 
-ImageHeader::ImageHeader(std::ifstream &stream)
+ImageHeader::ImageHeader(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
 #include <iostream>
 
-void ImageHeader::serialize(std::ofstream &stream) const
+void ImageHeader::serialize(std::ostream &stream) const
 {
     std::cout << "Height : " << _height << ", Width : " << _width << ", DataOffset : " << _dataOffset << std::endl;
     StreamHelper::write(stream, _height);
@@ -35,7 +35,7 @@ void ImageHeader::serialize(std::ofstream &stream) const
     stream.seekp(lastPos);
 }
 
-void ImageHeader::deserialize(std::ifstream &stream)
+void ImageHeader::deserialize(std::istream &stream)
 {
     _height = StreamHelper::read<uint16_t>(stream);
     _width = StreamHelper::read<uint16_t>(stream);

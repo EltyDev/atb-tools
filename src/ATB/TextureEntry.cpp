@@ -1,7 +1,7 @@
 #include "ATB/TextureEntry.hpp"
 #include "StreamHelper.hpp"
 
-TextureEntry::TextureEntry(std::ifstream &stream)
+TextureEntry::TextureEntry(std::istream &stream)
 {
     this->deserialize(stream);
 }
@@ -11,7 +11,7 @@ TextureEntry::TextureEntry(uint8_t bpp, const Format &format, uint16_t paletteSi
 {
 }
 
-void TextureEntry::serialize(std::ofstream &stream) const
+void TextureEntry::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _bpp);
     StreamHelper::write(stream, _format);
@@ -22,20 +22,20 @@ void TextureEntry::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _paletteOffset);
     StreamHelper::write(stream, _imageOffset);
     std::streampos lastPos = stream.tellp();
-    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset) || stream.tellp() % 16 != 0)
+    while (stream.tellp() % 16 != 0)
         StreamHelper::write<uint8_t>(stream, 0x88);
     if (_format.getValue() == Format::ATBValue::CI4 || _format.getValue() == Format::ATBValue::CI8) {
         stream.seekp(_paletteOffset, std::ios::beg);
         StreamHelper::write(stream, _paletteData.data(), _paletteSize * 2);
     }
-    while (stream.tellp() < static_cast<std::streampos>(_imageOffset) || stream.tellp() % 16 != 0)
+    while (stream.tellp() % 16 != 0)
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(_imageOffset, std::ios::beg);
     StreamHelper::write(stream, _imageData.data(), _imageSize);
     stream.seekp(lastPos);
 }
 
-void TextureEntry::deserialize(std::ifstream &stream)
+void TextureEntry::deserialize(std::istream &stream)
 {
     _bpp = StreamHelper::read<uint8_t>(stream);
     _format = StreamHelper::read<Format>(stream);
@@ -112,4 +112,20 @@ size_t TextureEntry::getSize() const
 {
     return sizeof(_bpp) + _format.getSize() + sizeof(_paletteSize) + sizeof(_width) + sizeof(_height) +
         sizeof(_imageSize) + sizeof(_paletteOffset) + sizeof(_imageOffset);
+}
+
+void TextureEntry::writePadding(std::fstream &stream) const
+{
+    stream.seekp(getSize(), std::ios::cur);
+    std::streampos lastPos = stream.tellp();
+    if (!StreamHelper::isFree(stream, _paletteOffset))
+        return;
+    while (stream.tellp() < static_cast<std::streampos>(_paletteOffset))
+        StreamHelper::write<uint8_t>(stream, 0x88);
+    stream.seekp(lastPos);
+    if (!StreamHelper::isFree(stream, _imageOffset))
+        return;
+    while (stream.tellp() < static_cast<std::streampos>(_imageOffset))
+        StreamHelper::write<uint8_t>(stream, 0x88);
+    stream.seekp(lastPos);
 }

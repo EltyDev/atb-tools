@@ -6,18 +6,18 @@ ImageDescription::ImageDescription(uint32_t imageOffset, uint32_t paletteOffset)
 {
 }
 
-ImageDescription::ImageDescription(std::ifstream &stream)
+ImageDescription::ImageDescription(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void ImageDescription::serialize(std::ofstream &stream) const
+void ImageDescription::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _imageOffset);
     StreamHelper::write(stream, _paletteOffset);
 }
 
-void ImageDescription::deserialize(std::ifstream &stream)
+void ImageDescription::deserialize(std::istream &stream)
 {
     _imageOffset = StreamHelper::read<uint32_t>(stream);
     _paletteOffset = StreamHelper::read<uint32_t>(stream);

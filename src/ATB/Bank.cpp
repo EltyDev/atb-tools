@@ -6,19 +6,19 @@ Bank::Bank(uint16_t frames, uint32_t frameOffset)
 {
 }
 
-Bank::Bank(std::ifstream &stream)
+Bank::Bank(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void Bank::serialize(std::ofstream &stream) const
+void Bank::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _frames);
     StreamHelper::write(stream, _padding);
     StreamHelper::write(stream, _frameOffset);
 }
 
-void Bank::deserialize(std::ifstream &stream)
+void Bank::deserialize(std::istream &stream)
 {
     _frames = StreamHelper::read<uint16_t>(stream);
     _padding = StreamHelper::read<uint16_t>(stream);

@@ -7,10 +7,10 @@
 class ImageDescription : public Serializable {
     public:
         ImageDescription(uint32_t imageOffset, uint32_t paletteOffset);
-        ImageDescription(std::ifstream &stream);
+        ImageDescription(std::istream &stream);
         ~ImageDescription() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint32_t getImageOffset() const;
         uint32_t getPaletteOffset() const;

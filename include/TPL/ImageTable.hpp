@@ -9,9 +9,9 @@ class ImageTable : public Serializable {
         ImageTable(uint32_t imageOffset, uint32_t paletteOffset);
         ImageTable() = default;
         ~ImageTable() = default;
-        ImageTable(std::ifstream &stream);
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        ImageTable(std::istream &stream);
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint32_t getImageOffset() const;
         uint32_t getPaletteOffset() const;

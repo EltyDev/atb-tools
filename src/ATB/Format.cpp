@@ -9,12 +9,12 @@ Format::Format() : _value(ATBValue::RGBA8)
 {
 }
 
-void Format::serialize(std::ofstream &stream) const
+void Format::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _value);
 }
 
-void Format::deserialize(std::ifstream &stream)
+void Format::deserialize(std::istream &stream)
 {
     _value = StreamHelper::read<Format::ATBValue>(stream);
 }

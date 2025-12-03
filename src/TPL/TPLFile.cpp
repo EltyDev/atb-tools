@@ -20,7 +20,7 @@ TPLFile::TPLFile(ATBFile &atbFile) {
     size_t imageHeaderSize = ImageHeader().getSize();
     size_t paletteHeaderSize = PaletteHeader().getSize();
     uint32_t currentOffset = _header.getSize() + atbFile.getTextures().size() * ImageTableSize;
-    for (TextureEntry &texture : atbFile.getTextures()) {
+    for (const TextureEntry &texture : atbFile.getTextures()) {
         uint32_t paletteOffset = 0;
         _imageTables.emplace_back(currentOffset, currentOffset + imageHeaderSize);
         size_t imageOffset = currentOffset  + (_palettes.size() * paletteHeaderSize);
@@ -39,7 +39,7 @@ TPLFile::TPLFile(ATBFile &atbFile) {
 
 #include <iostream>
 
-void TPLFile::serialize(std::ofstream &stream) const
+void TPLFile::serialize(std::ostream &stream) const
 {
     _header.serialize(stream);
     StreamHelper::write(stream, _imageTables.data(), _imageTables.size());
@@ -54,7 +54,7 @@ void TPLFile::serialize(std::ofstream &stream) const
     }
 }
 
-void TPLFile::deserialize(std::ifstream &stream)
+void TPLFile::deserialize(std::istream &stream)
 {
     _header.deserialize(stream);
     _imageTables.resize(_header.getNumTextures());

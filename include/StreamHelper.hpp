@@ -38,14 +38,14 @@ public:
     }
 
     template <typename T>
-    static void write(std::ofstream &stream, const T &data)
+    static void write(std::ostream &stream, const T &data)
     {
         T be = toBigEndian(data);
         stream.write(reinterpret_cast<const char *>(&be), sizeof(T));
     }
 
     template <typename T>
-    static void write(std::ofstream &stream, const T* buffer, size_t count)
+    static void write(std::ostream &stream, const T* buffer, size_t count)
     {
         for (size_t i = 0; i < count; i++) {
             T be = toBigEndian(buffer[i]);
@@ -54,20 +54,20 @@ public:
     }
 
     template <typename T> requires std::is_base_of_v<Serializable, T>
-    static void write(std::ofstream &stream, const T &data)
+    static void write(std::ostream &stream, const T &data)
     {
         data.serialize(stream);
     }
 
     template <typename T> requires std::is_base_of_v<Serializable, T>
-    static void write(std::ofstream &stream, const T* buffer, size_t count)
+    static void write(std::ostream &stream, const T* buffer, size_t count)
     {
         for (size_t i = 0; i < count; ++i)
             buffer[i].serialize(stream);
     }
 
     template <typename T>
-    static T read(std::ifstream &stream)
+    static T read(std::istream &stream)
     {
         T raw{};
         stream.read(reinterpret_cast<char *>(&raw), sizeof(T));
@@ -75,7 +75,7 @@ public:
     }
 
     template <typename T>
-    static void read(std::ifstream &stream, T* buffer, size_t count)
+    static void read(std::istream &stream, T* buffer, size_t count)
     {
         for (size_t i = 0; i < count; i++) {
             T raw{};
@@ -85,7 +85,7 @@ public:
     }
 
     template <typename T> requires std::is_base_of_v<Serializable, T>
-    static T read(std::ifstream &stream)
+    static T read(std::istream &stream)
     {
         T data;
         data.deserialize(stream);
@@ -93,10 +93,21 @@ public:
     }
 
     template <typename T> requires std::is_base_of_v<Serializable, T>
-    static void read(std::ifstream &stream, T* buffer, size_t count)
+    static void read(std::istream &stream, T* buffer, size_t count)
     {
         for (size_t i = 0; i < count; ++i)
             buffer[i] = read<T>(stream);
+    }
+
+    static bool isFree(std::fstream &stream, std::streampos pos)
+    {
+        while (stream.tellp() < pos) {
+            uint8_t byte;
+            stream.read(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
+            if (byte != 0x00)
+                return false;
+        }
+        return true;
     }
 };
 

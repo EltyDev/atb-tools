@@ -9,10 +9,10 @@ class PaletteHeader : public Serializable {
     public:
         PaletteHeader() = default;
         PaletteHeader(uint16_t numEntries, uint8_t unpacked, uint32_t dataOffset, const Format &format, const std::vector<uint8_t> &paletteData);
-        PaletteHeader(std::ifstream &stream);
+        PaletteHeader(std::istream &stream);
         ~PaletteHeader() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint16_t getNumEntries() const;
         uint8_t getUnpacked() const;

@@ -8,10 +8,10 @@ class PatternEntry : public Serializable {
     public:
         PatternEntry() = default;
         PatternEntry(uint16_t layers, uint16_t centerX, uint16_t centerY, uint16_t width, uint16_t height, uint32_t layerOffset);
-        PatternEntry(std::ifstream &file);
+        PatternEntry(std::istream &file);
         ~PatternEntry() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint16_t getLayers() const;
         uint16_t getCenterX() const;

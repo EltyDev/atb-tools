@@ -6,18 +6,18 @@ ImageTable::ImageTable(uint32_t imageOffset, uint32_t paletteOffset)
 {
 }
 
-ImageTable::ImageTable(std::ifstream &stream)
+ImageTable::ImageTable(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void ImageTable::serialize(std::ofstream &stream) const
+void ImageTable::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _imageOffset);
     StreamHelper::write(stream, _paletteOffset);
 }
 
-void ImageTable::deserialize(std::ifstream &stream)
+void ImageTable::deserialize(std::istream &stream)
 {
     _imageOffset = StreamHelper::read<uint32_t>(stream);
     _paletteOffset = StreamHelper::read<uint32_t>(stream);

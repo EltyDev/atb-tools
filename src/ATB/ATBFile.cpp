@@ -12,11 +12,14 @@ ATBFile::ATBFile(const std::filesystem::path path) : _path(path)
     file.close();
 }
 
-void ATBFile::deserialize(std::ifstream &stream)
+void ATBFile::deserialize(std::istream &stream)
 {
-    if (!stream.is_open())
+    if (!stream.good())
         throw std::runtime_error("Stream is not open");
-    if (stream.left < 16)
+    stream.seekg(0, std::ios::end);
+    std::streampos streamSize = stream.tellg();
+    stream.seekg(0, std::ios::beg);
+    if (streamSize < 20)
         throw std::runtime_error("Stream is too small to be a valid ATB file");
 
     uint16_t numBanks = StreamHelper::read<uint16_t>(stream);
@@ -59,7 +62,7 @@ void ATBFile::deserialize(std::ifstream &stream)
     }
 }
 
-void ATBFile::serialize(std::ofstream &stream) const
+void ATBFile::serialize(std::ostream &stream) const
 {
     StreamHelper::write<uint16_t>(stream, static_cast<uint16_t>(_banks.size()));
     StreamHelper::write<uint16_t>(stream, static_cast<uint16_t>(_patterns.size()));
@@ -291,27 +294,27 @@ void ATBFile::unpack()
     doc.save_file(tplPath.c_str());
 }
 
-std::vector<PatternEntry> &ATBFile::getPatterns()
+const std::vector<PatternEntry> &ATBFile::getPatterns() const
 {
     return this->_patterns;
 }
 
-std::vector<Bank> &ATBFile::getBanks()
+const std::vector<Bank> &ATBFile::getBanks() const
 {
     return this->_banks;
 }
 
-std::vector<TextureEntry> &ATBFile::getTextures()
+const std::vector<TextureEntry> &ATBFile::getTextures() const
 {
     return this->_textures;
 }
 
-std::vector<Frame> &ATBFile::getFrames()
+const std::vector<Frame> &ATBFile::getFrames() const
 {
     return this->_frames;
 }
 
-std::vector<Layer> &ATBFile::getLayers()
+const std::vector<Layer> &ATBFile::getLayers() const
 {
     return this->_layers;
 }
@@ -344,4 +347,15 @@ size_t ATBFile::getSize() const
         size += pattern.getLayers() * sizeof(Layer);
     }
     return size;
+}
+
+void ATBFile::exportToFile(const std::filesystem::path path) const
+{
+    std::fstream output(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    if (!output.is_open())
+        throw std::runtime_error("Could not create file: " + path.string());
+    serialize(output);
+    for (const TextureEntry &texture : getTextures())
+        texture.writePadding(output);
+    output.close();
 }

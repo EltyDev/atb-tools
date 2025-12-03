@@ -8,10 +8,10 @@
 class TextureEntry : public Serializable {
     public:
         TextureEntry() = default;
-        TextureEntry(std::ifstream &file);
+        TextureEntry(std::istream &file);
         TextureEntry(uint8_t bpp, const Format &format, uint16_t paletteSize, uint16_t width, uint16_t height, uint32_t imageSize, uint32_t paletteOffset, uint32_t imageOffset);
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint8_t getBpp() const;
         Format getFormat() const;
@@ -23,6 +23,7 @@ class TextureEntry : public Serializable {
         uint32_t getImageOffset() const;
         std::vector<uint8_t> getPaletteData() const;
         std::vector<uint8_t> getImageData() const;
+        void writePadding(std::fstream &stream) const;
         ~TextureEntry() = default;
 
     protected:

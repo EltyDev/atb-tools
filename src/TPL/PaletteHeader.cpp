@@ -6,12 +6,12 @@ PaletteHeader::PaletteHeader(uint16_t numEntries, uint8_t unpacked, uint32_t dat
 {
 }
 
-PaletteHeader::PaletteHeader(std::ifstream &stream)
+PaletteHeader::PaletteHeader(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void PaletteHeader::serialize(std::ofstream &stream) const
+void PaletteHeader::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _numEntries);
     StreamHelper::write(stream, _unpacked);
@@ -24,7 +24,7 @@ void PaletteHeader::serialize(std::ofstream &stream) const
     stream.seekp(lastPos);
 }
 
-void PaletteHeader::deserialize(std::ifstream &stream)
+void PaletteHeader::deserialize(std::istream &stream)
 {
     if (stream.tellg() == 0)
         return;

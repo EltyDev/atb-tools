@@ -16,8 +16,8 @@ class TPLFile : public Serializable {
         TPLFile(ATBFile &atbFile);
         TPLFile(const std::filesystem::path path);
         ~TPLFile() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         const Header &getHeader() const;
         const std::vector<ImageTable> &getImageTables() const;
         const std::vector<PaletteHeader> &getPalettes() const;

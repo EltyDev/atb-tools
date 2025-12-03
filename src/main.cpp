@@ -17,12 +17,7 @@ int unpackATB(const std::filesystem::path filePath) {
 
 int test(const std::filesystem::path filePath) {
     ATBFile atbFile(filePath);
-    std::string testPath = filePath.stem().string() + "_test.atb";
-    std::ofstream output(testPath, std::ios::binary);
-    if (!output.is_open())
-        throw std::runtime_error("Could not create file: " + testPath);
-    atbFile.serialize(output);
-    output.close();
+    atbFile.exportToFile(filePath.stem().string() + "_test.atb");
     return (0);
 }
 

@@ -6,7 +6,7 @@ Layer::Layer(uint8_t alpha, uint8_t flip, uint16_t texture_index, uint16_t texco
 {
 }
 
-void Layer::serialize(std::ofstream &stream) const
+void Layer::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _alpha);
     StreamHelper::write(stream, _flip);
@@ -27,7 +27,7 @@ void Layer::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _lower_left_vertex_y);
 }
 
-void Layer::deserialize(std::ifstream &stream)
+void Layer::deserialize(std::istream &stream)
 {
     _alpha = StreamHelper::read<uint8_t>(stream);
     _flip = StreamHelper::read<uint8_t>(stream);

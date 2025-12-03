@@ -5,12 +5,12 @@ PatternEntry::PatternEntry(uint16_t layers, uint16_t centerX, uint16_t centerY, 
     : _layers(layers), _centerX(centerX), _centerY(centerY), _width(width), _height(height), _layerOffset(layerOffset), _padding(0)
 {}
 
-PatternEntry::PatternEntry(std::ifstream &stream)
+PatternEntry::PatternEntry(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void PatternEntry::deserialize(std::ifstream &stream)
+void PatternEntry::deserialize(std::istream &stream)
 {
     _layers = StreamHelper::read<uint16_t>(stream);
     _centerX = StreamHelper::read<uint16_t>(stream);
@@ -21,7 +21,7 @@ void PatternEntry::deserialize(std::ifstream &stream)
     _layerOffset = StreamHelper::read<uint32_t>(stream);
 }
 
-void PatternEntry::serialize(std::ofstream &stream) const
+void PatternEntry::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _layers);
     StreamHelper::write(stream, _centerX);

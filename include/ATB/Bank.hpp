@@ -8,10 +8,10 @@ class Bank : public Serializable {
     public:
         Bank() = default;
         Bank(uint16_t frames, uint32_t frameOffset);
-        Bank(std::ifstream &stream);
+        Bank(std::istream &stream);
         ~Bank() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint16_t getFrames() const;
         uint32_t getFrameOffset() const;

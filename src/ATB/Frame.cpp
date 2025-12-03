@@ -6,7 +6,7 @@ Frame::Frame(uint16_t patternIndex, int16_t length, uint16_t shiftX, uint16_t sh
 {
 }
 
-void Frame::serialize(std::ofstream &stream) const
+void Frame::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _patternIndex);
     StreamHelper::write(stream, _length);
@@ -16,7 +16,7 @@ void Frame::serialize(std::ofstream &stream) const
     StreamHelper::write(stream, _unk);
 }
 
-void Frame::deserialize(std::ifstream &stream)
+void Frame::deserialize(std::istream &stream)
 {
     _patternIndex = StreamHelper::read<uint16_t>(stream);
     _length = StreamHelper::read<int16_t>(stream);

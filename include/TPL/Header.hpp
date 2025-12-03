@@ -10,10 +10,10 @@ class Header : public Serializable {
     public:
         Header() = default;
         Header(uint32_t numTextures);
-        Header(std::ifstream &stream);
+        Header(std::istream &stream);
         ~Header() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         uint32_t getNumTextures() const;
         uint32_t getOffsetTableOffset() const;
         size_t getSize() const override;

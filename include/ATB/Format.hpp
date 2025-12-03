@@ -37,8 +37,8 @@ class Format : public Serializable {
         Format(const ATBValue formatValue);
         Format();
         ~Format() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         ATBValue getValue() const;
         GXValue getGXValue() const;

@@ -7,19 +7,19 @@ Header::Header(uint32_t numTextures)
     _offsetTableOffset = this->getSize();
 }
 
-Header::Header(std::ifstream &stream)
+Header::Header(std::istream &stream)
 {
     this->deserialize(stream);
 }
 
-void Header::serialize(std::ofstream &stream) const
+void Header::serialize(std::ostream &stream) const
 {
     StreamHelper::write(stream, _magic);
     StreamHelper::write(stream, _numTextures);
     StreamHelper::write(stream, _offsetTableOffset);
 }
 
-void Header::deserialize(std::ifstream &stream)
+void Header::deserialize(std::istream &stream)
 {
     _magic = StreamHelper::read<uint32_t>(stream);
     if (_magic != MAGIC_NUMBER)

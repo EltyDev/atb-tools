@@ -5,8 +5,8 @@
 
 class Serializable {
     public:
-        virtual void serialize(std::ofstream &stream) const = 0;
-        virtual void deserialize(std::ifstream &stream) = 0;
+        virtual void serialize(std::ostream &stream) const = 0;
+        virtual void deserialize(std::istream &stream) = 0;
         virtual size_t getSize() const = 0;
     protected:
     private:

@@ -9,10 +9,10 @@ class ImageHeader : public Serializable {
     public:
         ImageHeader() = default;
         ImageHeader(uint16_t height, uint16_t width, const Format &format, uint32_t dataOffset, uint32_t wrapS, uint32_t wrapT, uint32_t minFilter, uint32_t magFilter, float lodBias, uint8_t edgeLod, uint8_t minLod, uint8_t maxLod, uint8_t unpacked, const std::vector<uint8_t> &data);
-        ImageHeader(std::ifstream &stream);
+        ImageHeader(std::istream &stream);
         ~ImageHeader() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint16_t getHeight() const;
         uint16_t getWidth() const;

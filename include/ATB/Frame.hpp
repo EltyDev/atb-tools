@@ -9,8 +9,8 @@ class Frame : public Serializable {
         Frame() = default;
         Frame(uint16_t patternIndex, int16_t length, uint16_t shiftX, uint16_t shiftY, uint16_t flip);
         ~Frame() = default;
-        void serialize(std::ofstream &stream) const override;
-        void deserialize(std::ifstream &stream) override;
+        void serialize(std::ostream &stream) const override;
+        void deserialize(std::istream &stream) override;
         size_t getSize() const override;
         uint16_t getPatternIndex() const;
         int16_t getLength() const;
