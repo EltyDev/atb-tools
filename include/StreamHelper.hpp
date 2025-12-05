@@ -6,6 +6,7 @@
     #include <fstream>
     #include <type_traits>
     #include <algorithm>
+    #include <vector>
     #include "Serializable.hpp"
 
 class StreamHelper {
@@ -99,15 +100,28 @@ public:
             buffer[i] = read<T>(stream);
     }
 
-    static bool isFree(std::fstream &stream, std::streampos pos)
+    static std::streamoff getFreeZoneSize(std::fstream &stream, std::vector<uint32_t> offsets)
     {
-        while (stream.tellg() < pos) {
-            uint8_t byte;
-            stream.read(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-            if (byte != 0x00)
-                return false;
+        std::streamoff offset = 0;
+        std::vector<uint32_t> usefulOffsets;
+        std::streampos currentPos = stream.tellg();
+        for (uint32_t offset : offsets) {
+            if (offset > currentPos)
+                usefulOffsets.push_back(offset);
         }
-        return true;
+        for (; StreamHelper::read<uint8_t>(stream) == 0x00; offset++) {
+            currentPos = stream.tellg();
+            bool isBreak = false;
+            for (uint32_t off : usefulOffsets) {
+                if (currentPos >= off) {
+                    isBreak = true;
+                    break;
+                }
+            }
+            if (isBreak)
+                break;
+        }
+        return offset;
     }
 };
 

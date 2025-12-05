@@ -111,55 +111,25 @@ size_t TextureEntry::getSize() const
         sizeof(_imageSize) + sizeof(_paletteOffset) + sizeof(_imageOffset);
 }
 
-#include <iostream>
-
-void TextureEntry::writePadding(std::fstream &stream, std::vector<uint32_t> _offsets) const
+void TextureEntry::writePadding(std::fstream &stream, std::vector<uint32_t> offsets) const
 {
     stream.seekp(getSize(), std::ios::cur);
     stream.seekg(stream.tellp(), std::ios::beg);
-    std::cout << "Writing padding for texture at position " << std::hex << stream.tellp() << std::dec << std::endl;
-    std::cout << "  Image Offset: 0x" << std::hex << _imageOffset << std::dec << std::endl;
-    std::cout << "  Palette Offset: 0x" << std::hex << _paletteOffset << std::dec << std::endl;
-    std::cout << " Palette Size: " << _paletteSize << std::endl;
     std::streampos lastPos = stream.tellp();
-    std::streamoff offset = 0;
-    for (; StreamHelper::read<uint8_t>(stream) == 0x00; offset++) {
-        std::streampos currentPos = stream.tellg();
-        bool isBreak = false;
-        for (uint32_t off : _offsets) {
-            if (currentPos >= off) {
-                isBreak = true;
-                break;
-            }
-        }
-        if (isBreak)
-            break;
-    }
-    std::cout << "Pos: " << std::hex << stream.tellp() << std::dec << std::endl;
-    std::streampos maxPos = std::floor(stream.tellp() / 16) * 16;
+    std::streamoff offset =  StreamHelper::getFreeZoneSize(stream, offsets);
+    std::streampos maxPos = std::floor(stream.tellg() / 16) * 16;
     stream.seekp(lastPos);
     stream.seekg(lastPos);
-    for (; offset >= 0 && stream.tellg() < maxPos; offset--) {
-        std::cout << " Writing padding byte at position " << std::hex << stream.tellp() << std::dec << std::endl;
-        std::cout << std::hex << stream.tellg() << ": 0x00" << std::dec << std::endl;
+    for (; offset >= 0 && stream.tellp() < maxPos; offset--)
         StreamHelper::write<uint8_t>(stream, 0x88);
-    }
-    std::streampos nextPos = stream.tellp();
-    uint32_t paletteOffset = getPaletteOffset();
-    stream.seekg(paletteOffset + (_paletteSize * 2), std::ios::beg);
-    if (StreamHelper::isFree(stream, _imageOffset)) {
-        stream.seekp(paletteOffset + (_paletteSize * 2), std::ios::beg);
-        while (stream.tellp() < _imageOffset)
-            StreamHelper::write<uint8_t>(stream, 0x88);
-    }
-    stream.seekg(lastPos + nextPos);
-    std::streampos minPos = std::min(_imageOffset, paletteOffset);
-    if (!StreamHelper::isFree(stream, minPos)) {
-        stream.seekp(lastPos);
+    if (_paletteSize == 0)
         return;
-    }
-    stream.seekp(lastPos + nextPos);
-    while (stream.tellp() < minPos)
+    std::streampos afterPalette = _paletteOffset  + _paletteSize * 2;
+    stream.seekg(afterPalette);
+    offset = StreamHelper::getFreeZoneSize(stream, offsets);
+    maxPos = maxPos = std::floor(stream.tellg() / 16) * 16;
+    stream.seekp(afterPalette);
+    for (; offset >= 0 && stream.tellp() < maxPos; offset--)
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(lastPos);
 }

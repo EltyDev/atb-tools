@@ -23,7 +23,7 @@ class TextureEntry : public Serializable {
         uint32_t getImageOffset() const;
         std::vector<uint8_t> getPaletteData() const;
         std::vector<uint8_t> getImageData() const;
-        void writePadding(std::fstream &stream, std::vector<uint32_t> _offsets) const;
+        void writePadding(std::fstream &stream, std::vector<uint32_t> offsets) const;
         ~TextureEntry() = default;
 
     protected:
