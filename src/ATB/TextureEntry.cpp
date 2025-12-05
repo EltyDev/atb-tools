@@ -1,5 +1,6 @@
 #include "ATB/TextureEntry.hpp"
 #include "StreamHelper.hpp"
+#include <cmath>
 
 TextureEntry::TextureEntry(std::istream &stream)
 {

@@ -2,7 +2,6 @@
 #include "TPL/TPLFile.hpp"
 #include "StreamHelper.hpp"
 #include <pugixml.hpp>
-#include <cmath>
 
 ATBFile::ATBFile(const std::filesystem::path path) : _path(path)
 {
