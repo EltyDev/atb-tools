@@ -106,7 +106,7 @@ public:
         std::vector<uint32_t> usefulOffsets;
         std::streampos currentPos = stream.tellg();
         for (uint32_t offset : offsets) {
-            if (offset > currentPos)
+            if (offset >= currentPos)
                 usefulOffsets.push_back(offset);
         }
         for (; StreamHelper::read<uint8_t>(stream) == 0x00; offset++) {
