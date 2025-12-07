@@ -1,6 +1,7 @@
 #include "TPL/TPLFile.hpp"
 #include "StreamHelper.hpp"
 #include "ATB/ATBFile.hpp"
+#include "TPL/ImageHeader.hpp"
 
 TPLFile::TPLFile(const std::filesystem::path path)
 {
@@ -11,45 +12,54 @@ TPLFile::TPLFile(const std::filesystem::path path)
     file.close();
 }
 
-TPLFile::TPLFile(ATBFile &atbFile) {
-    _header = Header(atbFile.getTextures().size());
-    _imageTables.reserve(atbFile.getTextures().size());
-    _palettes.reserve(atbFile.getTextures().size());
-    _images.reserve(atbFile.getTextures().size());
-    size_t ImageTableSize = ImageTable().getSize();
-    size_t imageHeaderSize = ImageHeader().getSize();
-    size_t paletteHeaderSize = PaletteHeader().getSize();
-    uint32_t currentOffset = _header.getSize() + atbFile.getTextures().size() * ImageTableSize;
-    for (const TextureEntry &texture : atbFile.getTextures()) {
-        uint32_t paletteOffset = 0;
-        _imageTables.emplace_back(currentOffset, currentOffset + imageHeaderSize);
-        size_t imageOffset = currentOffset  + (_palettes.size() * paletteHeaderSize);
-        imageOffset = ((imageOffset - 1)|(TEXTURE_ALIGNMENT-1))+1;
-        _images.emplace_back(texture.getHeight(), texture.getWidth(), texture.getFormat(), imageOffset, 0, 0, 1, 1, 0.0f, 0, 0, 0, 0, texture.getImageData());
-        if (texture.getFormat().getValue() == Format::ATBValue::CI4 || texture.getFormat().getValue() == Format::ATBValue::CI8) {
-            paletteOffset = currentOffset;
-            _palettes.emplace_back(texture.getPaletteSize(), 0, paletteOffset + paletteHeaderSize, texture.getFormat(), texture.getPaletteData());
-            currentOffset += _palettes[0].getSize();
-        } else {
-            _palettes.emplace_back();
-        }
-        currentOffset += imageHeaderSize + texture.getImageSize();
-    }
-}
-
 #include <iostream>
+
+TPLFile::TPLFile(ATBFile &atbFile) {
+    size_t textureNumber = atbFile.getTextures().size();
+    _header = Header(textureNumber);
+    _imageTables.reserve(textureNumber);
+    _images.reserve(textureNumber);
+    size_t paletteNumber = 0;
+    size_t textureHeadersOffset = _header.getSize() + textureNumber * ImageTable().getSize();
+    size_t paletteHeadersOffset = textureHeadersOffset  + textureNumber * ImageHeader().getSize();
+    size_t dataOffset = paletteHeadersOffset + textureNumber * PaletteHeader().getSize();
+    dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    for (const TextureEntry &texture : atbFile.getTextures()) {
+        _images.emplace_back(texture.getHeight(), texture.getHeight(), texture.getFormat(), dataOffset, 0, 0, 1, 1, 0.f, 0, 0, 0, 0, texture.getImageData());
+        dataOffset += texture.getImageSize();
+        dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    }
+    dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    for (const TextureEntry &texture : atbFile.getTextures()) {
+        if (texture.getPaletteSize() == 0) continue;
+        _palettes.emplace_back(texture.getPaletteSize(), 0, dataOffset, Format(Format::ATBValue::RGB5A3_DUPE), texture.getPaletteData());
+        dataOffset += texture.getPaletteSize() * 2; 
+        dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    }
+    for (const TextureEntry &texture : atbFile.getTextures()) {
+        if (texture.getPaletteSize() > 0) {
+            _imageTables.emplace_back(textureHeadersOffset, paletteHeadersOffset);
+            paletteHeadersOffset += PaletteHeader().getSize();
+        } else
+            _imageTables.emplace_back(textureHeadersOffset, 0);
+        textureHeadersOffset += ImageHeader().getSize();
+    }
+
+}
 
 void TPLFile::serialize(std::ostream &stream) const
 {
     _header.serialize(stream);
+    stream.seekp(_header.getOffsetTableOffset());
     StreamHelper::write(stream, _imageTables.data(), _imageTables.size());
-    std::cout << _header.getNumTextures() << " textures found in TPL file." << std::endl;
-    for (size_t i = 0; i < _imageTables.size(); i++) {
+    std::cout << _imageTables.size() << " textures found in TPL file." << std::endl;
+    for (size_t i = 0, j = 0; i < _imageTables.size(); i++) {
         stream.seekp(_imageTables[i].getImageOffset(), std::ios::beg);
         _images[i].serialize(stream);
         if (_imageTables[i].getPaletteOffset() != 0) {
             stream.seekp(_imageTables[i].getPaletteOffset(), std::ios::beg);
-            _palettes[i].serialize(stream);
+            _palettes[j].serialize(stream);
+            ++j;
         }
     }
 }
