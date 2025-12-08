@@ -1,10 +1,13 @@
 #include "ATB/ATBFile.hpp"
+#include "TPL/PaletteHeader.hpp"
 #include "TPL/TPLFile.hpp"
 #include "StreamHelper.hpp"
 #include <pugixml.hpp>
 
 ATBFile::ATBFile(const std::filesystem::path path) : _path(path)
 {
+    if (std::filesystem::is_directory(path))
+        return;
     std::ifstream file(_path, std::ios::binary);
     if (!file.is_open())
         throw std::runtime_error("Could not open file: " + _path.string());
@@ -98,44 +101,43 @@ void ATBFile::serialize(std::ostream &stream) const
     }
 }
 
-ATBFile::ATBFile(const TPLFile &tplFile, pugi::xml_document &doc)
+ATBFile::ATBFile(const TPLFile &tplFile) : _textureOffset(0x58)
 {
-    _patternOffset = 20;
     uint32_t textureCount = tplFile.getHeader().getNumTextures();
-    _textures.resize(textureCount);
-    uint32_t layerOffset = _patternOffset + (_patterns.size() * sizeof(TextureEntry));
-    _bankOffset = layerOffset + (_layers.size() * sizeof(Layer));
-    uint32_t frameOffset = _bankOffset + (_banks.size() * sizeof(Bank));
-    _textureOffset = frameOffset + (_frames.size() * sizeof(Frame));
-    uint32_t textureDataOffset = _textureOffset + (textureCount * sizeof(TextureEntry));
-    textureDataOffset = (textureDataOffset + TEXTURE_ALIGNMENT - 1) & ~(TEXTURE_ALIGNMENT - 1);
-    pugi::xml_node patterns = doc.child("patterns");
-    pugi::xml_node tmp = patterns.first_child();
-    size_t i = 0;
-    while (tmp) {
-        tmp = tmp.next_sibling();
-        std::string name = tmp.name();
-        if (!name.empty() && name == "pattern") {
-            pugi::xml_node child = tmp.first_child().next_sibling().first_child();
-            uint16_t layers = child.text().as_uint();
-            child = tmp.next_sibling().next_sibling().first_child();
-            uint16_t centerX = child.text().as_int();
-            child = tmp.next_sibling().next_sibling().next_sibling().first_child();
-            uint16_t centerY = child.text().as_int();
-            child = tmp.next_sibling().next_sibling().next_sibling().next_sibling().first_child();
-            uint16_t width = child.text().as_uint();
-            child = tmp.next_sibling().next_sibling().next_sibling().next_sibling().next_sibling().first_child();
-            uint16_t height = child.text().as_uint();
-            _patterns[i] = PatternEntry(layers, centerX, centerY, width, height, frameOffset);
+    const std::vector<ImageTable> &imageTables = tplFile.getImageTables();
+    uint32_t textureOffset = _textureOffset;
+    uint32_t dataOffset = ((_textureOffset - 1) | (ATB_TEXTURE_ALIGNMENT - 1)) + 1;
+    _textures.reserve(textureCount);
+    for (size_t i = 0, j = 0; i < textureCount; ++i) {
+        const ImageHeader &imageHeader = tplFile.getImages()[i];
+        bool hasPalette = imageTables[i].getPaletteOffset() != 0;
+        uint16_t width = imageHeader.getWidth();
+        uint16_t height = imageHeader.getHeight();
+        Format format = imageHeader.getFormat();
+        uint8_t bpp = format.getBppFromGX();
+        TextureEntry &texture = _textures.emplace_back(bpp, format, 0, width, height, 0, 0,  0);
+        if (hasPalette) {
+            const PaletteHeader &paletteHeader = tplFile.getPalettes()[j];
+            texture.setPaletteData(paletteHeader.getPaletteData());
+            texture.setPaletteOffset(dataOffset);
+            dataOffset += texture.getPaletteSize() * 2;
+            dataOffset = ((_textureOffset - 1) | (ATB_TEXTURE_ALIGNMENT - 1)) + 1;
+            ++j;
         }
-    }
-
+        texture.setImageData(imageHeader.getData());
+        texture.setImageOffset(dataOffset);
+        dataOffset += texture.getImageSize();
+        dataOffset = ((_textureOffset - 1) | (ATB_TEXTURE_ALIGNMENT - 1)) + 1;
+    } 
 }
+
+#include <iostream>
 
 void ATBFile::pack()
 {
     pugi::xml_document doc;
-    doc.load_file(_path.string().c_str());
+    std::string folderName = _path.filename().empty() ? _path.parent_path().filename().string() : _path.filename().string();
+    doc.load_file((_path / (folderName + ".xml")).c_str());
     pugi::xml_node banks = doc.child("banks");
     pugi::xml_node texture = doc.child("texture");
     std::string textureName = texture.first_child().text().as_string();
@@ -143,72 +145,12 @@ void ATBFile::pack()
         throw std::runtime_error("No banks node found in XML file");
     if (!texture || textureName.empty())
         throw std::runtime_error("No texture node found in XML file");
-    std::filesystem::path tplPath = _path.parent_path() / textureName;
-    TPLFile tplFile(tplPath);
-    pugi::xml_node tmp = banks.first_child();
-    size_t numBanks = 0;
-	while (tmp) {
-        tmp = tmp.next_sibling();
-        std::string name = tmp.name();
-        if (!name.empty() && name == "bank")
-            numBanks++;
-    }
-    _banks.resize(numBanks);
-    pugi::xml_node frames = doc.child("frames");
-    if (!frames)
-        throw std::runtime_error("No frames node found in XML file");
-    tmp = frames.first_child();
-    size_t numFrames = 0;
-    std::vector<std::string> frameNames;
-    while (tmp) {
-        tmp = tmp.next_sibling();
-        std::string name = tmp.name();
-        if (!name.empty() && name == "frame") {
-            pugi::xml_node node = tmp.first_child();
-            while (node) {
-                node = node.next_sibling();
-                std::string nodeName = node.name();
-                if (!nodeName.empty())
-                    frameNames.emplace_back(nodeName);
-            }
-        }
-    }
-    _frames.resize(frameNames.size());
-    pugi::xml_node patterns = doc.child("patterns");
-    if (!patterns)
-        throw std::runtime_error("No patterns node found in XML file");
-    tmp = patterns.first_child();
-    size_t numPatterns = 0;
-    std::vector<std::string> patternNames;
-    while (tmp) {
-        tmp = tmp.next_sibling();
-        std::string name = tmp.name();
-        if (!name.empty() && name == "pattern")
-            patternNames.emplace_back(name);
-    }
-    _patterns.resize(patternNames.size());
-    pugi::xml_node layers = doc.child("layers");
-    if (!layers)
-        throw std::runtime_error("No layers node found in XML file");
-    tmp = layers.first_child();
-    std::vector<std::string> layerNames;
-    while (tmp) {
-        tmp = tmp.next_sibling();
-        std::string name = tmp.name();
-        if (!name.empty() && name == "layer") {
-            int i = 0;
-            pugi::xml_node node = tmp.first_child();
-            while (node) {
-                node = node.next_sibling();
-                std::string nodeName = node.name();
-                if (!nodeName.empty())
-                    layerNames.emplace_back(nodeName);
-            }
-        }
-    }
-    _layers.resize(layerNames.size());
-    tmp = patterns.first_child();
-    *this = ATBFile(tplFile, doc);
+    TPLFile tplFile(_path / textureName);
+    *this = ATBFile(tplFile);
+    for (pugi::xml_node &bank : doc.child("banks").children("bank"))
+        _banks.emplace_back(bank.child("frame_count").text().as_uint(), 0);
+    
+    this->exportToFile(this->_path / (folderName + ".atb"));
 }
 
 void ATBFile::unpack()

@@ -12,29 +12,26 @@ TPLFile::TPLFile(const std::filesystem::path path)
     file.close();
 }
 
-#include <iostream>
-
 TPLFile::TPLFile(ATBFile &atbFile) {
     size_t textureNumber = atbFile.getTextures().size();
     _header = Header(textureNumber);
     _imageTables.reserve(textureNumber);
     _images.reserve(textureNumber);
-    size_t paletteNumber = 0;
     size_t textureHeadersOffset = _header.getSize() + textureNumber * ImageTable().getSize();
     size_t paletteHeadersOffset = textureHeadersOffset  + textureNumber * ImageHeader().getSize();
     size_t dataOffset = paletteHeadersOffset + textureNumber * PaletteHeader().getSize();
-    dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    dataOffset = ((dataOffset - 1) | (TPL_TEXTURE_ALIGNMENT - 1)) + 1;
     for (const TextureEntry &texture : atbFile.getTextures()) {
         _images.emplace_back(texture.getHeight(), texture.getHeight(), texture.getFormat(), dataOffset, 0, 0, 1, 1, 0.f, 0, 0, 0, 0, texture.getImageData());
         dataOffset += texture.getImageSize();
-        dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+        dataOffset = ((dataOffset - 1) | (TPL_TEXTURE_ALIGNMENT - 1)) + 1;
     }
-    dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+    dataOffset = ((dataOffset - 1) | (TPL_TEXTURE_ALIGNMENT - 1)) + 1;
     for (const TextureEntry &texture : atbFile.getTextures()) {
         if (texture.getPaletteSize() == 0) continue;
         _palettes.emplace_back(texture.getPaletteSize(), 0, dataOffset, Format(Format::ATBValue::RGB5A3_DUPE), texture.getPaletteData());
         dataOffset += texture.getPaletteSize() * 2; 
-        dataOffset = ((dataOffset - 1) | (TEXTURE_ALIGNMENT - 1)) + 1;
+        dataOffset = ((dataOffset - 1) | (TPL_TEXTURE_ALIGNMENT - 1)) + 1;
     }
     for (const TextureEntry &texture : atbFile.getTextures()) {
         if (texture.getPaletteSize() > 0) {
@@ -52,7 +49,6 @@ void TPLFile::serialize(std::ostream &stream) const
     _header.serialize(stream);
     stream.seekp(_header.getOffsetTableOffset());
     StreamHelper::write(stream, _imageTables.data(), _imageTables.size());
-    std::cout << _imageTables.size() << " textures found in TPL file." << std::endl;
     for (size_t i = 0, j = 0; i < _imageTables.size(); i++) {
         stream.seekp(_imageTables[i].getImageOffset(), std::ios::beg);
         _images[i].serialize(stream);
@@ -68,14 +64,16 @@ void TPLFile::deserialize(std::istream &stream)
 {
     _header.deserialize(stream);
     _imageTables.resize(_header.getNumTextures());
+    stream.seekg(_header.getOffsetTableOffset());
     StreamHelper::read(stream, _imageTables.data(), _header.getNumTextures());
     _images.reserve(_header.getNumTextures());
-    _palettes.reserve(_header.getNumTextures());
     for (const ImageTable &imageTable : _imageTables) {
         stream.seekg(imageTable.getImageOffset(), std::ios::beg);
         _images.emplace_back(stream);
-        stream.seekg(imageTable.getPaletteOffset(), std::ios::beg);
-        _palettes.emplace_back(stream);
+        if (imageTable.getPaletteOffset() != 0) {
+            stream.seekg(imageTable.getPaletteOffset(), std::ios::beg);
+            _palettes.emplace_back(stream);
+        }
     }
 }
 

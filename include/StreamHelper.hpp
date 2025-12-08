@@ -109,7 +109,7 @@ public:
             if (offset >= currentPos)
                 usefulOffsets.push_back(offset);
         }
-        for (; StreamHelper::read<uint8_t>(stream) == 0x00; offset++) {
+        for (; StreamHelper::read<uint8_t>(stream) == 0x00 && !stream.eof() ; offset++) {
             currentPos = stream.tellg();
             bool isBreak = false;
             for (uint32_t off : usefulOffsets) {

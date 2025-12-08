@@ -10,7 +10,7 @@
     #include "Frame.hpp"
     #include "Layer.hpp"
 
-    #define TEXTURE_ALIGNMENT 32
+    #define ATB_TEXTURE_ALIGNMENT 16
 
 class TPLFile;
 
@@ -21,7 +21,7 @@ namespace pugi {
 class ATBFile : public Serializable {
     public:
         ATBFile(const std::filesystem::path path);
-        ATBFile(const TPLFile &tplFile, pugi::xml_document &doc);
+        ATBFile(const TPLFile &tplFile);
         ~ATBFile() = default;
         void serialize(std::ostream &stream) const override;
         void deserialize(std::istream &stream) override;

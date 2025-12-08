@@ -9,6 +9,8 @@
     #include <vector>
     #include <filesystem>
 
+    #define TPL_TEXTURE_ALIGNMENT 32
+    
 class ATBFile;
 
 class TPLFile : public Serializable {

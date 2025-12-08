@@ -34,11 +34,12 @@ class Format : public Serializable {
             A8 = 39
         };
 
-        Format(const ATBValue formatValue);
+        Format(const ATBValue formatValue, bool isATB = true);
         Format();
         ~Format() = default;
         void serialize(std::ostream &stream) const override;
         void deserialize(std::istream &stream) override;
+        uint8_t getBppFromGX() const;
         size_t getSize() const override;
         ATBValue getValue() const;
         GXValue getGXValue() const;

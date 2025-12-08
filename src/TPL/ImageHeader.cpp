@@ -39,7 +39,7 @@ void ImageHeader::deserialize(std::istream &stream)
 {
     _height = StreamHelper::read<uint16_t>(stream);
     _width = StreamHelper::read<uint16_t>(stream);
-    _format = Format(static_cast<Format::ATBValue>(StreamHelper::read<uint32_t>(stream)));
+    _format = Format(static_cast<Format::ATBValue>(StreamHelper::read<uint32_t>(stream)), false);
     _dataOffset = StreamHelper::read<uint32_t>(stream);
     _wraps = StreamHelper::read<uint32_t>(stream);
     _wrapt = StreamHelper::read<uint32_t>(stream);
@@ -52,31 +52,7 @@ void ImageHeader::deserialize(std::istream &stream)
     _unpacked = StreamHelper::read<uint8_t>(stream);
     std::streampos lastPos = stream.tellg();
     stream.seekg(_dataOffset, std::ios::beg);
-    size_t dataSize = 0;
-    switch (_format.getValue()) {
-        case Format::ATBValue::RGBA8:
-            dataSize = _width * _height * 4;
-            break;
-        case Format::ATBValue::RGB5A3:
-        case Format::ATBValue::RGB5A3_DUPE:
-        case Format::ATBValue::I8:
-        case Format::ATBValue::IA8:
-        case Format::ATBValue::CI8:
-        case Format::ATBValue::A8:
-            dataSize = _width * _height * 2;
-            break;
-        case Format::ATBValue::I4:
-        case Format::ATBValue::IA4:
-        case Format::ATBValue::CI4:
-            dataSize = _width * _height;
-            break;
-        case Format::ATBValue::CMPR:
-            dataSize = (_width * _height) / 2;
-            break;
-        default:
-            dataSize = 0;
-            break;
-    }
+    size_t dataSize = _width * _height * _format.getBppFromGX();
     _data.resize(dataSize);
     StreamHelper::read(stream, _data.data(), dataSize);
     stream.seekg(lastPos);

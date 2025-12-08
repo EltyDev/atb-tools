@@ -133,3 +133,21 @@ void TextureEntry::writePadding(std::fstream &stream, std::vector<uint32_t> offs
         StreamHelper::write<uint8_t>(stream, 0x88);
     stream.seekp(lastPos);
 }
+
+void TextureEntry::setPaletteData(const std::vector<uint8_t> &data) {
+    this->_paletteData = data;
+    this->_paletteSize = data.size() / 2;
+}
+
+void TextureEntry::setPaletteOffset(uint32_t offset) {
+    _paletteOffset = offset;
+}
+
+void TextureEntry::setImageData(const std::vector<uint8_t> &data) {
+    this->_imageData = data;
+    this->_imageSize = data.size();
+}
+
+void TextureEntry::setImageOffset(uint32_t offset) {
+    _imageOffset = offset;
+}
